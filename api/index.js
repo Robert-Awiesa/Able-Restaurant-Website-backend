@@ -5,62 +5,62 @@ require('dotenv').config();
 
 const app = express();
 
-// Middleware - Explicit CORS so Vercel returns correct headers on every response
+// ── CORS ─────────────────────────────────────────────────────────────────────
 app.use(cors({
   origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
-app.options('*', cors()); // Handle all preflight OPTIONS requests
+app.options('*', cors());
 app.use(express.json());
 
-// Connect to MongoDB (Serverless compatible)
-let isConnected;
-const connectDB = async () => {
-  if (isConnected) return;
-  try {
-    const db = await mongoose.connect(process.env.MONGO_URI, {
-      serverSelectionTimeoutMS: 5000 // 5 seconds max wait before failing
-    });
-    isConnected = db.connections[0].readyState;
-    console.log('Connected to MongoDB');
-  } catch (err) {
-    console.error('Error connecting to MongoDB:', err);
-    throw err;
-  }
-};
+// ── MongoDB connection (cached across Vercel serverless invocations) ──────────
+let cachedConn = null;
 
-// Apply DB connection requirement to all routes
+async function connectDB() {
+  // If already connected, reuse it
+  if (cachedConn && mongoose.connection.readyState === 1) return cachedConn;
+
+  // Disconnect stale connection states (connecting / disconnecting)
+  if (mongoose.connection.readyState !== 0) {
+    await mongoose.disconnect();
+  }
+
+  cachedConn = await mongoose.connect(process.env.MONGO_URI, {
+    serverSelectionTimeoutMS: 8000,
+    socketTimeoutMS: 8000,
+    connectTimeoutMS: 8000,
+    maxPoolSize: 1          // Minimal pool for serverless
+  });
+
+  console.log('MongoDB connected');
+  return cachedConn;
+}
+
+// Inject DB connection before every route
 app.use(async (req, res, next) => {
   try {
     await connectDB();
     next();
   } catch (err) {
-    res.status(500).json({ error: 'Database connection failed' });
+    console.error('DB connection error:', err.message);
+    return res.status(500).json({ error: 'Database connection failed', detail: err.message });
   }
 });
 
-// Routes
-const orderRoutes = require('../routes/orders');
-app.use('/api/orders', orderRoutes);
+// ── Routes ────────────────────────────────────────────────────────────────────
+app.use('/api/orders', require('../routes/orders'));
+app.use('/api/auth',   require('../routes/auth'));
 
-const authRoutes = require('../routes/auth');
-app.use('/api/auth', authRoutes);
+app.get('/api/health', (req, res) => res.json({ status: 'OK', dbState: mongoose.connection.readyState }));
+app.get('/',           (req, res) => res.send('Able Restaurant API is running!'));
 
-// Simple health check route
-app.get('/api/health', (req, res) => {
-  res.status(200).json({ status: 'OK', message: 'Backend is running' });
-});
+// ── Local dev server (Vercel ignores this) ────────────────────────────────────
+if (require.main === module) {
+  const PORT = process.env.PORT || 5000;
+  connectDB().then(() => {
+    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+  });
+}
 
-// Root route so browser doesn't show "Cannot GET /"
-app.get('/', (req, res) => {
-  res.send('Able Restaurant API is running perfectly!');
-});
-
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
-
-// Export the Express API for Vercel Serverless Functions
 module.exports = app;
