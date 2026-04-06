@@ -1,7 +1,8 @@
-const express = require('express');
-const router = express.Router();
-const Order = require('../models/Order');
-const auth = require('../middleware/authMiddleware');
+const express  = require('express');
+const router   = express.Router();
+const Order    = require('../models/Order');
+const auth     = require('../middleware/authMiddleware');
+const connectDB = require('../lib/mongoose');
 
 // Generate a random alphanumeric order ID
 function generateOrderId(length = 6) {
@@ -16,14 +17,14 @@ function generateOrderId(length = 6) {
 // @route   POST /api/orders
 // @desc    Create a new order
 router.post('/', async (req, res) => {
+  await connectDB();
   try {
     const { name, phone, items, total, orderType, location, requestedTime } = req.body;
 
-    // Robust Validation
     if (!name || !phone || !items || !total || !orderType || !requestedTime) {
-      return res.status(400).json({ 
-        success: false, 
-        error: 'Missing required order fields. Please check name, phone, and items.' 
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required order fields. Please check name, phone, and items.',
       });
     }
 
@@ -32,7 +33,10 @@ router.post('/', async (req, res) => {
     }
 
     if (orderType === 'delivery' && !location) {
-      return res.status(400).json({ success: false, error: 'Delivery location is required for delivery orders.' });
+      return res.status(400).json({
+        success: false,
+        error: 'Delivery location is required for delivery orders.',
+      });
     }
 
     const newOrder = new Order({
@@ -43,17 +47,16 @@ router.post('/', async (req, res) => {
       orderType,
       location: location || (orderType === 'dine-in' ? 'Table Order' : 'Store Pickup'),
       requestedTime,
-      orderId: generateOrderId()
+      orderId: generateOrderId(),
     });
 
     const savedOrder = await newOrder.save();
     console.log(`Order created successfully: ${savedOrder.orderId}`);
-    
-    // Return explicit success flag and the full order object
+
     res.status(201).json({
       success: true,
       order: savedOrder,
-      orderId: savedOrder.orderId // explicit field for easier extraction
+      orderId: savedOrder.orderId,
     });
   } catch (err) {
     console.error('Order creation error:', err);
@@ -64,6 +67,7 @@ router.post('/', async (req, res) => {
 // @route   GET /api/orders
 // @desc    Get all orders (for Admin Dashboard)
 router.get('/', auth, async (req, res) => {
+  await connectDB();
   try {
     const orders = await Order.find().sort({ createdAt: -1 });
     res.status(200).json(orders);
@@ -76,17 +80,17 @@ router.get('/', auth, async (req, res) => {
 // @route   PUT /api/orders/:orderId/status
 // @desc    Update order status
 router.put('/:orderId/status', auth, async (req, res) => {
+  await connectDB();
   try {
     const { orderId } = req.params;
-    const { status } = req.body;
-    
-    // Using string matching since orderId in schema is a custom alphanumeric string
+    const { status }  = req.body;
+
     const updatedOrder = await Order.findOneAndUpdate(
-      { orderId }, 
-      { status }, 
+      { orderId },
+      { status },
       { returnDocument: 'after' }
     );
-    
+
     if (!updatedOrder) return res.status(404).json({ error: 'Order not found' });
     res.status(200).json(updatedOrder);
   } catch (err) {
@@ -98,12 +102,13 @@ router.put('/:orderId/status', auth, async (req, res) => {
 // @route   DELETE /api/orders/:orderId
 // @desc    Delete an order
 router.delete('/:orderId', auth, async (req, res) => {
+  await connectDB();
   try {
     const { orderId } = req.params;
-    
+
     const deletedOrder = await Order.findOneAndDelete({ orderId });
     if (!deletedOrder) return res.status(404).json({ error: 'Order not found' });
-    
+
     res.status(200).json({ message: 'Order deleted successfully' });
   } catch (err) {
     console.error(err);
