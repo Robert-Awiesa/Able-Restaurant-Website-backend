@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
+const auth = require('../middleware/authMiddleware');
 
 // @route   POST /api/auth/login
 // @desc    Authenticate admin and get token
@@ -32,6 +33,13 @@ router.post('/login', (req, res) => {
       res.json({ token });
     }
   );
+});
+
+// @route   GET /api/auth/verify
+// @desc    Verify if the token is still valid
+// @access  Private
+router.get('/verify', auth, (req, res) => {
+  res.json({ valid: true, user: req.user });
 });
 
 module.exports = router;

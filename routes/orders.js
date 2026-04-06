@@ -19,13 +19,29 @@ router.post('/', async (req, res) => {
   try {
     const { name, phone, items, total, orderType, location, requestedTime } = req.body;
 
+    // Robust Validation
+    if (!name || !phone || !items || !total || !orderType || !requestedTime) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Missing required order fields. Please check name, phone, and items.' 
+      });
+    }
+
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ success: false, error: 'Your cart is empty!' });
+    }
+
+    if (orderType === 'delivery' && !location) {
+      return res.status(400).json({ success: false, error: 'Delivery location is required for delivery orders.' });
+    }
+
     const newOrder = new Order({
       name,
       phone,
       items,
       total,
       orderType,
-      location,
+      location: location || (orderType === 'dine-in' ? 'Table Order' : 'Store Pickup'),
       requestedTime,
       orderId: generateOrderId()
     });
@@ -41,7 +57,7 @@ router.post('/', async (req, res) => {
     });
   } catch (err) {
     console.error('Order creation error:', err);
-    res.status(500).json({ success: false, error: 'Server error' });
+    res.status(500).json({ success: false, error: 'Server error. Please try again later.' });
   }
 });
 
