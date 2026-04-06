@@ -26,6 +26,11 @@ app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'OK', message: 'Backend is running' });
 });
 
+// Root route so browser doesn't show "Cannot GET /"
+app.get('/', (req, res) => {
+  res.send('Able Restaurant API is running perfectly!');
+});
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
