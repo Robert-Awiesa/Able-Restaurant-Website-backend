@@ -17,7 +17,6 @@ function generateOrderId(length = 6) {
 // @route   POST /api/orders
 // @desc    Create a new order
 router.post('/', async (req, res) => {
-  await connectDB();
   try {
     const { name, phone, items, total, orderType, location, requestedTime } = req.body;
 
@@ -67,7 +66,6 @@ router.post('/', async (req, res) => {
 // @route   GET /api/orders
 // @desc    Get all orders (for Admin Dashboard)
 router.get('/', auth, async (req, res) => {
-  await connectDB();
   try {
     const orders = await Order.find().sort({ createdAt: -1 });
     res.status(200).json(orders);
@@ -80,7 +78,6 @@ router.get('/', auth, async (req, res) => {
 // @route   PUT /api/orders/:orderId/status
 // @desc    Update order status
 router.put('/:orderId/status', auth, async (req, res) => {
-  await connectDB();
   try {
     const { orderId } = req.params;
     const { status }  = req.body;
@@ -102,7 +99,6 @@ router.put('/:orderId/status', auth, async (req, res) => {
 // @route   DELETE /api/orders/:orderId
 // @desc    Delete an order
 router.delete('/:orderId', auth, async (req, res) => {
-  await connectDB();
   try {
     const { orderId } = req.params;
 

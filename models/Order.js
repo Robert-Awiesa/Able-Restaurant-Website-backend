@@ -16,5 +16,4 @@ const orderSchema = new mongoose.Schema({
   status: { type: String, enum: ['pending', 'processing', 'completed'], default: 'pending' },
   orderId: { type: String, required: true, unique: true } // Unique alphanumeric order ID
 }, { timestamps: true });
-
 module.exports = mongoose.model('Order', orderSchema);
