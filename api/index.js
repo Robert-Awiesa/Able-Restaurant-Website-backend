@@ -15,10 +15,10 @@ mongoose.connect(process.env.MONGO_URI)
   .catch((err) => console.error('Error connecting to MongoDB:', err));
 
 // Routes
-const orderRoutes = require('./routes/orders');
+const orderRoutes = require('../routes/orders');
 app.use('/api/orders', orderRoutes);
 
-const authRoutes = require('./routes/auth');
+const authRoutes = require('../routes/auth');
 app.use('/api/auth', authRoutes);
 
 // Simple health check route
