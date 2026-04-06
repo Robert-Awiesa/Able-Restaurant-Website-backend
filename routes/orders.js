@@ -18,7 +18,7 @@ function generateOrderId(length = 6) {
 // @desc    Create a new order
 router.post('/', async (req, res) => {
   try {
-    const { name, phone, items, total, orderType, location, requestedTime } = req.body;
+    const { name, phone, items, total, orderType, location, requestedTime, orderId } = req.body;
 
     if (!name || !phone || !items || !total || !orderType || !requestedTime) {
       return res.status(400).json({
@@ -46,7 +46,7 @@ router.post('/', async (req, res) => {
       orderType,
       location: location || (orderType === 'dine-in' ? 'Table Order' : 'Store Pickup'),
       requestedTime,
-      orderId: generateOrderId(),
+      orderId: orderId || generateOrderId(),
     });
 
     const savedOrder = await newOrder.save();
@@ -59,6 +59,21 @@ router.post('/', async (req, res) => {
   } catch (err) {
     console.error('Order creation error:', err);
     res.status(500).json({ success: false, error: 'Server error. Please try again later.' });
+  }
+});
+
+// @route   GET /api/orders/check/:orderId
+// @desc    Verify if an order exists (used for frontend optimistic success check)
+router.get('/check/:orderId', async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const orderExists = await Order.findOne({ orderId }).select('_id');
+    if (orderExists) {
+      return res.status(200).json({ found: true });
+    }
+    res.status(404).json({ found: false });
+  } catch (err) {
+    res.status(500).json({ error: 'Check failed' });
   }
 });
 
