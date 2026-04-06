@@ -37,7 +37,11 @@ async function connectDB() {
   return cachedConn;
 }
 
-// Inject DB connection before every route
+// ── Health / root (no DB needed) ─────────────────────────────────────────────
+app.get('/api/health', (req, res) => res.json({ status: 'OK', dbState: mongoose.connection.readyState }));
+app.get('/',           (req, res) => res.send('Able Restaurant API is running!'));
+
+// ── DB middleware (only for data routes below) ────────────────────────────────
 app.use(async (req, res, next) => {
   try {
     await connectDB();
@@ -51,9 +55,6 @@ app.use(async (req, res, next) => {
 // ── Routes ────────────────────────────────────────────────────────────────────
 app.use('/api/orders', require('../routes/orders'));
 app.use('/api/auth',   require('../routes/auth'));
-
-app.get('/api/health', (req, res) => res.json({ status: 'OK', dbState: mongoose.connection.readyState }));
-app.get('/',           (req, res) => res.send('Able Restaurant API is running!'));
 
 // ── Local dev server (Vercel ignores this) ────────────────────────────────────
 if (require.main === module) {
