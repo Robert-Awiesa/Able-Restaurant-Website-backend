@@ -31,10 +31,17 @@ router.post('/', async (req, res) => {
     });
 
     const savedOrder = await newOrder.save();
-    res.status(201).json(savedOrder);
+    console.log(`Order created successfully: ${savedOrder.orderId}`);
+    
+    // Return explicit success flag and the full order object
+    res.status(201).json({
+      success: true,
+      order: savedOrder,
+      orderId: savedOrder.orderId // explicit field for easier extraction
+    });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    console.error('Order creation error:', err);
+    res.status(500).json({ success: false, error: 'Server error' });
   }
 });
 
