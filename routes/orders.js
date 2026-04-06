@@ -61,7 +61,7 @@ router.put('/:orderId/status', auth, async (req, res) => {
     const updatedOrder = await Order.findOneAndUpdate(
       { orderId }, 
       { status }, 
-      { new: true }
+      { returnDocument: 'after' }
     );
     
     if (!updatedOrder) return res.status(404).json({ error: 'Order not found' });
