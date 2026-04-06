@@ -54,7 +54,6 @@ router.post('/', async (req, res) => {
 
     res.status(201).json({
       success: true,
-      order: savedOrder,
       orderId: savedOrder.orderId,
     });
   } catch (err) {
