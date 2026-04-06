@@ -5,9 +5,14 @@ require('dotenv').config();
 
 const app = express();
 
-// Middleware
-app.use(cors());
-app.use(express.json()); // Parses incoming JSON requests
+// Middleware - Explicit CORS so Vercel returns correct headers on every response
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+app.options('*', cors()); // Handle all preflight OPTIONS requests
+app.use(express.json());
 
 // Connect to MongoDB (Serverless compatible)
 let isConnected;
