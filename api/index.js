@@ -9,10 +9,31 @@ const app = express();
 app.use(cors());
 app.use(express.json()); // Parses incoming JSON requests
 
-// Connect to MongoDB
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('Connected to MongoDB'))
-  .catch((err) => console.error('Error connecting to MongoDB:', err));
+// Connect to MongoDB (Serverless compatible)
+let isConnected;
+const connectDB = async () => {
+  if (isConnected) return;
+  try {
+    const db = await mongoose.connect(process.env.MONGO_URI, {
+      serverSelectionTimeoutMS: 5000 // 5 seconds max wait before failing
+    });
+    isConnected = db.connections[0].readyState;
+    console.log('Connected to MongoDB');
+  } catch (err) {
+    console.error('Error connecting to MongoDB:', err);
+    throw err;
+  }
+};
+
+// Apply DB connection requirement to all routes
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    res.status(500).json({ error: 'Database connection failed' });
+  }
+});
 
 // Routes
 const orderRoutes = require('../routes/orders');
