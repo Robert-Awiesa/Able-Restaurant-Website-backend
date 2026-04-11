@@ -7,7 +7,10 @@ const orderSchema = new mongoose.Schema({
     {
       name: { type: String, required: true },
       qty: { type: Number, required: true },
+      size: { type: String },
+      price: { type: String },
     }
+
   ],
   total: { type: Number, required: true },
   orderType: { type: String, enum: ['delivery', 'pickup', 'dine-in'], required: true },
