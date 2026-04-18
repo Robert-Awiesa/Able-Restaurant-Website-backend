@@ -4,7 +4,7 @@ require('dotenv').config();
 
 const orderRoutes = require('../routes/orders');
 const authRoutes = require('../routes/auth');
-// Add your other routes here
+const messagesRoutes = require('../routes/messages');
 
 const app = express();
 
@@ -44,6 +44,7 @@ app.use(express.json());
 // ── Routes ────────────────────────────────────────────────────────────────────
 app.use('/api/orders', orderRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/messages', messagesRoutes);
 
 // ── Health check ──────────────────────────────────────────────────────────────
 app.get('/', (req, res) => res.json({ status: 'API is running', mongodb: 'Connected' }));
