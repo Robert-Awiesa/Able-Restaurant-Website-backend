@@ -12,7 +12,7 @@ router.post('/', async (req, res) => {
     const newMessage = await Message.create({ name, email, phone, subject, message });
     res.status(201).json(newMessage);
   } catch (err) {
-    res.status(400).json({ error: 'Failed to send message' });
+    res.status(400).json({ error: `Failed to send message: ${err.message}` });
   }
 });
 
