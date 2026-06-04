@@ -18,9 +18,9 @@ function generateOrderId(length = 6) {
 // @desc    Create a new order
 router.post('/', async (req, res) => {
   try {
-    const { name, phone, items, total, orderType, location, requestedTime, orderId } = req.body;
+    const { name, email, phone, items, total, orderType, location, requestedTime, orderId, paymentReference } = req.body;
 
-    if (!name || !phone || !items || !total || !orderType || !requestedTime) {
+    if (!name || !email || !phone || !items || !total || !orderType || !requestedTime) {
       return res.status(400).json({
         success: false,
         error: 'Missing required order fields. Please check name, phone, and items.',
@@ -40,7 +40,9 @@ router.post('/', async (req, res) => {
 
     const newOrder = new Order({
       name,
+      email,
       phone,
+      paymentReference,
       items,
       total,
       orderType,
